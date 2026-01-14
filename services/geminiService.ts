@@ -73,10 +73,13 @@ export const analyzeArticle = async (text: string): Promise<AnalysisResponseItem
 
   Instructions:
   1. Clean the text: Remove extra newlines, weird symbols, but KEEP the original flow and paragraphs.
-  2. Structure Analysis: Split the text into 3 to 6 semantic segments based on the narrative arc, mood shifts, or key arguments.
-     - Minimum 3 segments.
-     - Maximum 6 segments.
-     - Do NOT split by fixed word count. Split by meaning.
+  2. Structure Analysis & Segmentation (Strict Order):
+     - **Segment 1 (Cover/Title)**: The FIRST segment MUST be a summary of the WHOLE article. 
+       - Content: The Article Title + A 1-sentence summary of the core theme.
+       - Visual Summary: A high-level conceptual abstract of the entire article.
+       - Image Prompt: A poster-like, cover-quality illustration representing the main theme.
+     - **Segments 2-N (Body)**: Split the rest of the body text into 3 to 6 semantic segments based on narrative arc or key arguments.
+       - Do NOT split by fixed word count. Split by meaning.
   3. Visual Extraction: For EACH segment, extract:
      - 'mood': The emotional tone in CHINESE (e.g., 治愈, 忧伤, 充满希望).
      - 'visualSummary': A concise, one-sentence abstract visual description of the segment's core meaning in CHINESE.
@@ -101,7 +104,7 @@ export const analyzeArticle = async (text: string): Promise<AnalysisResponseItem
         items: {
           type: Type.OBJECT,
           properties: {
-            content: { type: Type.STRING, description: "The cleaned original text for this segment" },
+            content: { type: Type.STRING, description: "The cleaned original text for this segment (For the first segment, this is Title + Summary)" },
             visualSummary: { type: Type.STRING, description: "One sentence visual summary in Chinese" },
             mood: { type: Type.STRING, description: "The mood of the segment in Chinese" },
             imagePrompt: { type: Type.STRING, description: "English image generation prompt, optimized for 2.35:1 aspect ratio" }

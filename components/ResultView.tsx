@@ -54,7 +54,9 @@ const ResultView: React.FC<ResultViewProps> = ({ segments }) => {
           {/* Text Section */}
           <div className="glass-panel rounded-2xl p-8 mb-6 hover:shadow-lg transition-shadow bg-white/80">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">片段 {index + 1}</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${index === 0 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                {index === 0 ? '封面 / 全文总结' : `片段 ${index}`}
+              </span>
               <div className="flex gap-2">
                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
                   {segment.mood}
@@ -68,7 +70,7 @@ const ResultView: React.FC<ResultViewProps> = ({ segments }) => {
                 </button>
               </div>
             </div>
-            <p className="article-text text-lg text-slate-800 leading-8 whitespace-pre-wrap">
+            <p className={`article-text text-slate-800 leading-8 whitespace-pre-wrap ${index === 0 ? 'font-bold text-xl' : 'text-lg'}`}>
               {segment.cleanedText}
             </p>
           </div>
@@ -135,22 +137,18 @@ const ResultView: React.FC<ResultViewProps> = ({ segments }) => {
                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                            </button>
 
-                           {/* Center Download Action (visible on hover) */}
-                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm pointer-events-none">
-                              {/* Pointer events none on container, auto on button so overlay doesn't block top-left button if overlapping, though center vs top-left should be fine. 
-                                  Actually, we want the whole overlay to be interactive for the download button, but we don't want it to block the top-left button.
-                                  Better to keep download button logic simple. The top-left button has z-10, so it sits above the overlay if the overlay is z-0.
-                              */}
-                              <button 
-                                onClick={() => handleDownload(segment.imageUrl!, index)}
-                                className="pointer-events-auto bg-white/90 hover:bg-white text-slate-900 px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
-                              >
-                                下载原图
-                              </button>
-                           </div>
+                           {/* Download Button (Bottom Right) - New Location */}
+                           <button 
+                             onClick={() => handleDownload(segment.imageUrl!, index)}
+                             className="absolute bottom-3 right-3 p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-lg transition-all opacity-0 group-hover:opacity-100 z-10 flex items-center gap-2"
+                             title="下载图片"
+                           >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                             <span className="text-xs font-bold">下载</span>
+                           </button>
                            
-                           {/* Size Label */}
-                           <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 rounded text-[10px] text-white/80 font-mono">
+                           {/* Size Label - Moved to Bottom Left */}
+                           <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/50 rounded text-[10px] text-white/80 font-mono backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
                              900 × 383
                            </div>
                         </>
