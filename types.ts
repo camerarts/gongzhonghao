@@ -18,6 +18,11 @@ export interface AnalysisResponseItem {
   imagePrompt: string;
 }
 
+export interface ImageGenerationSettings {
+  style: string;
+  systemPrompt: string;
+}
+
 declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;

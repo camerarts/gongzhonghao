@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResponseItem } from '../types';
+import { AnalysisResponseItem, ImageGenerationSettings } from '../types';
 
 // Helper to safely get the API Key from various environment sources
 const getEnvApiKey = (): string | undefined => {
@@ -59,12 +59,7 @@ export const ensureApiKey = async (): Promise<boolean> => {
 const getEffectiveKey = (): string | undefined => {
   const envKey = getEnvApiKey();
   if (envKey) return envKey;
-  // If no env key, the GoogleGenAI SDK will try to use the one from window.aistudio internally 
-  // or we assume the user has selected one which injects it implicitly for some SDK versions, 
-  // BUT for @google/genai we usually need to pass it if it's process.env.
-  // If window.aistudio is used, the SDK might handle it, but to be safe we return undefined 
-  // and let the caller handle the missing key error if specific logic is needed.
-  return process.env?.API_KEY; // Fallback to allow SDK to try its default behavior
+  return process.env?.API_KEY; 
 };
 
 // 1. Analyze and Segment Text
@@ -87,7 +82,7 @@ export const analyzeArticle = async (text: string): Promise<AnalysisResponseItem
      - 'visualSummary': A concise, one-sentence abstract visual description of the segment's core meaning in CHINESE.
      - 'imagePrompt': A highly detailed ENGLISH prompt for an AI image generator to create a high-quality, artistic illustration. 
        - **CRITICAL**: The image will be cropped to a 2.35:1 Cinematic Wide Aspect Ratio. Composition should be wide and cinematic.
-       - Style: Consistent artistic style (e.g., flat illustration, watercolor, or cinematic digital art).
+       - Style: Keep the description style-agnostic (focus on subject matter) unless specified.
        - No text or watermarks.
 
   Input Text:
@@ -124,19 +119,30 @@ export const analyzeArticle = async (text: string): Promise<AnalysisResponseItem
 };
 
 // 2. Generate Image for a Segment
-export const generateSegmentImage = async (prompt: string): Promise<string> => {
+export const generateSegmentImage = async (basePrompt: string, settings: ImageGenerationSettings): Promise<string> => {
   const apiKey = getEnvApiKey() || process.env.API_KEY;
   const ai = new GoogleGenAI({ apiKey: apiKey });
   
+  // Construct the final comprehensive prompt
+  const finalPrompt = `
+    Subject Description: ${basePrompt}
+    
+    Art Style Requirement: ${settings.style}
+    
+    Global System Instruction/Constraints: ${settings.systemPrompt}
+    
+    Technical Specs: Cinematic shot, wide angle, 8k resolution, high quality, no text, no watermarks, aspect ratio 16:9 (to be cropped to 2.35:1).
+  `;
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-image-preview',
       contents: {
-        parts: [{ text: prompt + " , cinematic shot, wide angle, 8k resolution, high quality" }]
+        parts: [{ text: finalPrompt }]
       },
       config: {
         imageConfig: {
-          aspectRatio: "16:9", // We will crop this to 2.35:1 in CSS as Gemini doesn't support 2.35:1 native yet
+          aspectRatio: "16:9", 
           imageSize: "1K"
         }
       }

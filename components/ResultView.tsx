@@ -19,9 +19,30 @@ const ResultView: React.FC<ResultViewProps> = ({ segments }) => {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert('已复制');
+      alert('文本已复制');
     } catch (err) {
-      console.error('Failed to copy!', err);
+      console.error('Failed to copy text!', err);
+    }
+  };
+
+  const handleCopyImage = async (imageUrl: string) => {
+    try {
+      // 1. Fetch the data URL to get a Blob
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // 2. Write the blob to the clipboard
+      // Note: This requires a secure context (HTTPS or localhost)
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob,
+        }),
+      ]);
+      
+      alert('图片已复制到剪贴板');
+    } catch (err) {
+      console.error('Failed to copy image!', err);
+      alert('复制图片失败，请尝试右键另存为');
     }
   };
 
@@ -80,9 +101,7 @@ const ResultView: React.FC<ResultViewProps> = ({ segments }) => {
             {/* Image Area - Only show if not idle */}
             {segment.imageStatus !== 'idle' && (
               <div className="border-t border-slate-200 bg-white p-4">
-                 {/* Aspect Ratio Container: 2.35:1 approx ~ 21/9. 
-                     Using tailwind arbitrary value aspect-[2.35/1] 
-                  */}
+                 {/* Aspect Ratio Container: 2.35:1 approx ~ 21/9. */}
                  <div className="w-full relative rounded-lg overflow-hidden bg-slate-100 shadow-sm aspect-[2.35/1] flex items-center justify-center group">
                     
                     {segment.imageStatus === 'loading' && (
@@ -106,15 +125,31 @@ const ResultView: React.FC<ResultViewProps> = ({ segments }) => {
                              alt={segment.summary} 
                              className="w-full h-full object-cover"
                            />
-                           {/* Overlay Actions */}
-                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
+                           
+                           {/* Copy Button (Top Left) */}
+                           <button 
+                             onClick={() => handleCopyImage(segment.imageUrl!)}
+                             className="absolute top-3 left-3 p-2 bg-white/90 hover:bg-white rounded-lg shadow-md text-slate-700 hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm z-10"
+                             title="复制图片到剪贴板"
+                           >
+                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                           </button>
+
+                           {/* Center Download Action (visible on hover) */}
+                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm pointer-events-none">
+                              {/* Pointer events none on container, auto on button so overlay doesn't block top-left button if overlapping, though center vs top-left should be fine. 
+                                  Actually, we want the whole overlay to be interactive for the download button, but we don't want it to block the top-left button.
+                                  Better to keep download button logic simple. The top-left button has z-10, so it sits above the overlay if the overlay is z-0.
+                              */}
                               <button 
                                 onClick={() => handleDownload(segment.imageUrl!, index)}
-                                className="bg-white/90 hover:bg-white text-slate-900 px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+                                className="pointer-events-auto bg-white/90 hover:bg-white text-slate-900 px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
                               >
-                                下载
+                                下载原图
                               </button>
                            </div>
+                           
+                           {/* Size Label */}
                            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 rounded text-[10px] text-white/80 font-mono">
                              900 × 383
                            </div>

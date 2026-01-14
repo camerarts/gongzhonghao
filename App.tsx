@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import ArticleInput from './components/ArticleInput';
 import ResultView from './components/ResultView';
+import SettingsModal from './components/SettingsModal';
 import { analyzeArticle, generateSegmentImage, ensureApiKey } from './services/geminiService';
-import { ProcessedSegment, AppStatus } from './types';
+import { ProcessedSegment, AppStatus, ImageGenerationSettings } from './types';
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<AppStatus>('idle');
   const [segments, setSegments] = useState<ProcessedSegment[]>([]);
   const [keyError, setKeyError] = useState<string | null>(null);
+  
+  // Settings State
+  const [showSettings, setShowSettings] = useState(false);
+  // Default set to "Tech & Finance" style
+  const [genSettings, setGenSettings] = useState<ImageGenerationSettings>({
+    style: 'Professional financial tech aesthetic, cool color palette (deep blue, graphite gray), metallic and glass textures, geometric composition, data visualization elements, rational and restrained atmosphere, 8k resolution',
+    systemPrompt: 'Strictly adhere to a professional, rational, and objective visual tone suitable for top-tier financial/tech research reports. Main colors must be cool tones (deep blue, cool grey). Avoid high saturation warm colors. NO TEXT, NO NUMBERS, NO CHARTS with legible data, NO LOGOS. Do not show specific human faces; use silhouettes or abstract figures if necessary. Composition should use geometric structures, grids, and depth.'
+  });
 
   // Check API Key on mount
   useEffect(() => {
@@ -82,7 +91,8 @@ const App: React.FC = () => {
     // Process all images
     await Promise.all(segmentsToProcess.map(async (segment) => {
       try {
-        const imageUrl = await generateSegmentImage(segment.imagePrompt);
+        // Pass the current global settings to the generation service
+        const imageUrl = await generateSegmentImage(segment.imagePrompt, genSettings);
         
         setSegments(prev => prev.map(s => 
           s.id === segment.id 
@@ -139,12 +149,6 @@ const App: React.FC = () => {
                         手动输入 Key (临时)
                     </button>
                   </div>
-
-                  <p className="mt-8 text-xs text-slate-400">
-                      <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-indigo-500">
-                          查看 Gemini API 计费说明
-                      </a>
-                  </p>
               </div>
           </div>
       )
@@ -153,6 +157,14 @@ const App: React.FC = () => {
   return (
     <div className="h-screen w-full flex overflow-hidden glass-bg font-sans text-slate-900">
       
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)}
+        settings={genSettings}
+        onSave={setGenSettings}
+      />
+
       {/* Left Column: Input (1/3 width) */}
       <div className="w-1/3 h-full border-r border-white/50 bg-white/30 backdrop-blur-xl flex flex-col shadow-xl z-10">
         <div className="p-6 border-b border-white/50 bg-white/40">
@@ -208,9 +220,9 @@ const App: React.FC = () => {
                )}
                
                <button 
-                 onClick={handleManualConfigure}
+                 onClick={() => setShowSettings(true)}
                  className="p-2.5 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-white/60 transition-all border border-transparent hover:border-white/50"
-                 title="API Key 设置"
+                 title="生图设置 (风格 & 提示词)"
                >
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                </button>
