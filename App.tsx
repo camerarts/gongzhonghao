@@ -18,7 +18,7 @@ const App: React.FC = () => {
   const [isProjectManagerOpen, setIsProjectManagerOpen] = useState(false);
   const [projectManagerMode, setProjectManagerMode] = useState<'list' | 'create'>('list');
 
-  // App Content State (derived from current project, but kept in state for React reactivity)
+  // App Content State
   const [status, setStatus] = useState<AppStatus>('idle');
   const [segments, setSegments] = useState<ProcessedSegment[]>([]);
   
@@ -53,7 +53,6 @@ const App: React.FC = () => {
           const sorted = [...parsed].sort((a, b) => b.lastModified - a.lastModified);
           loadProjectIntoState(sorted[0]);
         } else {
-            // Create a default project if none exist
             createDefaultProject();
         }
       } catch (e) {
@@ -72,7 +71,26 @@ const App: React.FC = () => {
     initKey();
   }, []);
 
-  // 2. Auto-save Projects when state changes
+  // 2. Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + N : New Project
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleNewProjectRequest();
+      }
+      // Ctrl/Cmd + F : Find/Search (Open Manager)
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        handleOpenManager();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // 3. Auto-save Projects when state changes
   useEffect(() => {
     if (!currentProjectId) return;
 
@@ -88,13 +106,12 @@ const App: React.FC = () => {
         }
         return p;
       });
-      // Save to local storage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
   }, [segments, status, currentProjectId]);
 
-  // 3. Save Settings when changed
+  // 4. Save Settings when changed
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(genSettings));
   }, [genSettings]);
@@ -167,7 +184,6 @@ const App: React.FC = () => {
       if (updatedProjects.length > 0) {
         loadProjectIntoState(updatedProjects[0]);
       } else {
-        // Don't leave app empty, create new default
         createDefaultProject();
       }
     }
@@ -241,10 +257,8 @@ const App: React.FC = () => {
   };
 
   if (keyError) {
-      // (Keep existing error UI)
       return (
           <div className="min-h-screen glass-bg flex items-center justify-center p-4">
-               {/* Same error UI as before, omitted for brevity but logic implies it's the same block */}
               <div className="glass-panel p-10 rounded-3xl shadow-xl text-center max-w-md">
                   <h2 className="text-xl font-bold text-rose-600 mb-4">API Key 未配置</h2>
                   <div className="flex flex-col gap-3">
@@ -280,18 +294,18 @@ const App: React.FC = () => {
         onDeleteProject={handleDeleteProject}
       />
 
-      {/* NEW: Left Sidebar */}
+      {/* Left Sidebar (Now Dynamic) */}
       <Sidebar 
         onNewProject={handleNewProjectRequest}
         onOpenProjectManager={handleOpenManager}
         onOpenSettings={() => setShowSettings(true)}
       />
 
-      {/* Main Content Container (Flex Row of Old Columns) */}
+      {/* Main Content Container */}
       <div className="flex-1 flex overflow-hidden relative">
         
         {/* Left Column: Input (1/3 width) */}
-        <div className="w-1/3 h-full border-r border-white/50 bg-white/30 backdrop-blur-xl flex flex-col shadow-xl z-10 relative">
+        <div className="w-1/3 h-full border-r border-white/50 bg-white/30 backdrop-blur-xl flex flex-col shadow-xl z-10 relative transition-all">
           <div className="p-6 border-b border-white/50 bg-white/40">
              <div className="flex flex-col gap-1">
                 <h1 className="font-bold text-lg text-slate-800 flex items-center gap-2">
@@ -304,9 +318,8 @@ const App: React.FC = () => {
              </div>
           </div>
           <div className="flex-1 overflow-y-auto p-0 scrollbar-hide">
-             {/* Key props: Reset input if segments empty (new project) */}
              <ArticleInput 
-               key={currentProjectId} // Force re-mount on project switch to clear internal state if needed
+               key={currentProjectId} 
                onAnalyze={handleAnalyze} 
                isAnalyzing={status === 'analyzing'} 
              />
