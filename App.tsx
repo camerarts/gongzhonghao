@@ -20,6 +20,22 @@ const App: React.FC = () => {
     init();
   }, []);
 
+  const handleManualConfigure = async () => {
+    if (window.aistudio) {
+      try {
+        await window.aistudio.openSelectKey();
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        if (hasKey) {
+          setKeyError(null);
+        }
+      } catch (e) {
+        console.error("Error selecting key:", e);
+      }
+    } else {
+      alert("当前环境不支持手动配置，请检查环境变量设置。");
+    }
+  };
+
   // Step 1: Segmentation and Prompt Extraction
   const handleAnalyze = async (text: string) => {
     const hasKey = await ensureApiKey();
@@ -91,17 +107,36 @@ const App: React.FC = () => {
           <div className="min-h-screen glass-bg flex items-center justify-center p-4">
               <div className="glass-panel p-10 rounded-3xl shadow-xl text-center max-w-md">
                   <h2 className="text-xl font-bold text-rose-600 mb-4">API Key 未配置</h2>
-                  <p className="text-slate-600 mb-6">
-                    检测到缺少 API Key。<br/>
-                    请在 Cloudflare Pages 后台的 <strong>Environment Variables</strong> 中设置 <code>API_KEY</code>。
-                  </p>
+                  
+                  <div className="text-left bg-slate-100 p-4 rounded-xl mb-6 text-sm text-slate-700 space-y-2">
+                    <p className="font-semibold">无法读取环境变量，请尝试以下方案：</p>
+                    <ul className="list-disc list-inside space-y-1 text-slate-600">
+                      <li>检查 Cloudflare 变量名是否为 <code>API_KEY</code></li>
+                      <li>尝试将变量名改为 <code>VITE_API_KEY</code> (推荐)</li>
+                      <li>配置后请<strong>重新部署</strong> (Retry Deployment)</li>
+                    </ul>
+                  </div>
                   
                   <div className="flex flex-col gap-3">
                     <button 
                         onClick={() => window.location.reload()}
                         className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg font-medium"
                     >
-                        配置完成后刷新页面
+                        刷新页面重试
+                    </button>
+                    
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-slate-300"></div>
+                        <span className="flex-shrink-0 mx-4 text-slate-400 text-xs">或者</span>
+                        <div className="flex-grow border-t border-slate-300"></div>
+                    </div>
+
+                    <button 
+                        onClick={handleManualConfigure}
+                        className="bg-white border border-slate-300 text-slate-700 px-6 py-2.5 rounded-xl hover:bg-slate-50 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.39a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        手动输入 Key (临时)
                     </button>
                   </div>
 
@@ -171,6 +206,14 @@ const App: React.FC = () => {
                     )}
                   </button>
                )}
+               
+               <button 
+                 onClick={handleManualConfigure}
+                 className="p-2.5 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-white/60 transition-all border border-transparent hover:border-white/50"
+                 title="API Key 设置"
+               >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+               </button>
            </div>
         </header>
 

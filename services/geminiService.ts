@@ -1,8 +1,43 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResponseItem } from '../types';
 
+// Helper to safely get the API Key from various environment sources
+const getEnvApiKey = (): string | undefined => {
+  // 1. Try standard process.env (Node/Webpack/some polyfills)
+  try {
+    if (typeof process !== 'undefined' && process.env?.API_KEY) {
+      return process.env.API_KEY;
+    }
+  } catch (e) {
+    // process is not defined
+  }
+
+  // 2. Try Vite standard (common in Cloudflare Pages)
+  try {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_KEY) {
+      // @ts-ignore
+      return import.meta.env.VITE_API_KEY;
+    }
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env?.API_KEY) {
+      // @ts-ignore
+      return import.meta.env.API_KEY;
+    }
+  } catch (e) {
+    // import.meta is not defined
+  }
+
+  return undefined;
+};
+
 // Helper to ensure we have a key or prompt user
 export const ensureApiKey = async (): Promise<boolean> => {
+  // Check environment variable first
+  const envKey = getEnvApiKey();
+  if (envKey) return true;
+
+  // Check AI Studio selection
   if (window.aistudio) {
     const hasKey = await window.aistudio.hasSelectedApiKey();
     if (!hasKey) {
@@ -16,12 +51,26 @@ export const ensureApiKey = async (): Promise<boolean> => {
     }
     return true;
   }
-  return !!process.env.API_KEY;
+  
+  return false;
+};
+
+// Internal helper to get the effective key for requests
+const getEffectiveKey = (): string | undefined => {
+  const envKey = getEnvApiKey();
+  if (envKey) return envKey;
+  // If no env key, the GoogleGenAI SDK will try to use the one from window.aistudio internally 
+  // or we assume the user has selected one which injects it implicitly for some SDK versions, 
+  // BUT for @google/genai we usually need to pass it if it's process.env.
+  // If window.aistudio is used, the SDK might handle it, but to be safe we return undefined 
+  // and let the caller handle the missing key error if specific logic is needed.
+  return process.env?.API_KEY; // Fallback to allow SDK to try its default behavior
 };
 
 // 1. Analyze and Segment Text
 export const analyzeArticle = async (text: string): Promise<AnalysisResponseItem[]> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getEnvApiKey() || process.env.API_KEY;
+  const ai = new GoogleGenAI({ apiKey: apiKey });
   
   const prompt = `
   You are a professional WeChat Official Account editor and art director. 
@@ -76,8 +125,8 @@ export const analyzeArticle = async (text: string): Promise<AnalysisResponseItem
 
 // 2. Generate Image for a Segment
 export const generateSegmentImage = async (prompt: string): Promise<string> => {
-  // Re-initialize to ensure fresh key if changed
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getEnvApiKey() || process.env.API_KEY;
+  const ai = new GoogleGenAI({ apiKey: apiKey });
   
   try {
     const response = await ai.models.generateContent({
