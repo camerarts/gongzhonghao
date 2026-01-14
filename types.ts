@@ -23,6 +23,15 @@ export interface ImageGenerationSettings {
   systemPrompt: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  createdAt: number;
+  lastModified: number;
+  segments: ProcessedSegment[];
+  status: AppStatus;
+}
+
 declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
