@@ -20,22 +20,6 @@ const App: React.FC = () => {
     init();
   }, []);
 
-  const handleConfigureKey = async () => {
-    if (window.aistudio) {
-      try {
-        await window.aistudio.openSelectKey();
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        if (hasKey) {
-          setKeyError(null);
-        }
-      } catch (e) {
-        console.error("Error selecting key:", e);
-      }
-    } else {
-      alert("当前环境不支持在线配置 Key，请检查环境变量 (process.env.API_KEY)。");
-    }
-  };
-
   // Step 1: Segmentation and Prompt Extraction
   const handleAnalyze = async (text: string) => {
     const hasKey = await ensureApiKey();
@@ -106,28 +90,24 @@ const App: React.FC = () => {
       return (
           <div className="min-h-screen glass-bg flex items-center justify-center p-4">
               <div className="glass-panel p-10 rounded-3xl shadow-xl text-center max-w-md">
-                  <h2 className="text-xl font-bold text-rose-600 mb-4">需要配置 API Key</h2>
-                  <p className="text-slate-600 mb-6">{keyError}</p>
+                  <h2 className="text-xl font-bold text-rose-600 mb-4">API Key 未配置</h2>
+                  <p className="text-slate-600 mb-6">
+                    检测到缺少 API Key。<br/>
+                    请在 Cloudflare Pages 后台的 <strong>Environment Variables</strong> 中设置 <code>API_KEY</code>。
+                  </p>
                   
                   <div className="flex flex-col gap-3">
                     <button 
-                        onClick={handleConfigureKey}
-                        className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg font-medium flex items-center justify-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        配置 API Key
-                    </button>
-                    <button 
                         onClick={() => window.location.reload()}
-                        className="text-slate-500 text-sm hover:text-slate-700 underline mt-2"
+                        className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg font-medium"
                     >
-                        已配置？刷新页面
+                        配置完成后刷新页面
                     </button>
                   </div>
 
                   <p className="mt-8 text-xs text-slate-400">
                       <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-indigo-500">
-                          查看计费说明
+                          查看 Gemini API 计费说明
                       </a>
                   </p>
               </div>
@@ -191,14 +171,6 @@ const App: React.FC = () => {
                     )}
                   </button>
                )}
-
-               <button 
-                 onClick={handleConfigureKey}
-                 className="p-2.5 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-white/60 transition-all border border-transparent hover:border-white/50"
-                 title="API Key 设置"
-               >
-                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-               </button>
            </div>
         </header>
 
