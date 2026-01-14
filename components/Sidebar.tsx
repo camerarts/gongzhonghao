@@ -22,51 +22,62 @@ const Sidebar: React.FC<SidebarProps> = ({
     onClick, 
     isActive = false, 
     shortcut = null,
-    isPrimary = false
+    isPrimary = false,
+    href = undefined, // New: Support for URL
+    target = undefined // New: Support for target (e.g., _blank)
   }: { 
     icon: React.ReactNode, 
     label: string, 
-    onClick: () => void, 
+    onClick?: React.MouseEventHandler, 
     isActive?: boolean,
     shortcut?: string | null,
-    isPrimary?: boolean
-  }) => (
-    <button 
-      onClick={onClick}
-      className={`
-        group relative flex items-center gap-3 px-3 py-3 w-full rounded-xl transition-all duration-200
-        ${isActive 
-          ? 'bg-indigo-600/10 text-indigo-400' 
-          : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
-        ${isPrimary && !isActive ? 'bg-indigo-600 text-white hover:bg-indigo-500 hover:text-white shadow-lg shadow-indigo-900/20' : ''}
-      `}
-      title={!isExpanded ? label : ''}
-    >
-      <div className={`flex-shrink-0 flex items-center justify-center w-6 h-6 ${isActive ? 'text-indigo-400' : ''}`}>
-        {icon}
-      </div>
-      
-      <div className={`flex-1 text-left whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}>
-        <span className="font-medium text-sm">{label}</span>
-      </div>
+    isPrimary?: boolean,
+    href?: string,
+    target?: string
+  }) => {
+    // Polymorphic component: render <a> if href exists, otherwise <button>
+    const Component = href ? 'a' : 'button';
 
-      {/* Expanded Shortcut Hint */}
-      {shortcut && isExpanded && (
-        <span className="text-[10px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 font-mono">
-          {shortcut}
-        </span>
-      )}
+    return (
+      <Component 
+        href={href}
+        target={target}
+        onClick={onClick}
+        className={`
+          group relative flex items-center gap-3 px-3 py-3 w-full rounded-xl transition-all duration-200
+          ${isActive 
+            ? 'bg-indigo-600/10 text-indigo-400' 
+            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
+          ${isPrimary && !isActive ? 'bg-indigo-600 text-white hover:bg-indigo-500 hover:text-white shadow-lg shadow-indigo-900/20' : ''}
+        `}
+        title={!isExpanded ? label : ''}
+      >
+        <div className={`flex-shrink-0 flex items-center justify-center w-6 h-6 ${isActive ? 'text-indigo-400' : ''}`}>
+          {icon}
+        </div>
+        
+        <div className={`flex-1 text-left whitespace-nowrap overflow-hidden transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0'}`}>
+          <span className="font-medium text-sm">{label}</span>
+        </div>
 
-      {/* Collapsed Tooltip */}
-      {!isExpanded && (
-        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-2.5 py-1.5 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap border border-slate-700 shadow-xl transition-all z-50">
-          {label} {shortcut && <span className="opacity-50 ml-1">({shortcut})</span>}
-          {/* Tooltip Arrow */}
-          <span className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 border-l border-b border-slate-700"></span>
-        </span>
-      )}
-    </button>
-  );
+        {/* Expanded Shortcut Hint */}
+        {shortcut && isExpanded && (
+          <span className="text-[10px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 font-mono">
+            {shortcut}
+          </span>
+        )}
+
+        {/* Collapsed Tooltip */}
+        {!isExpanded && (
+          <span className="absolute left-full top-1/2 -translate-y-1/2 ml-4 px-2.5 py-1.5 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap border border-slate-700 shadow-xl transition-all z-50">
+            {label} {shortcut && <span className="opacity-50 ml-1">({shortcut})</span>}
+            {/* Tooltip Arrow */}
+            <span className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-800 rotate-45 border-l border-b border-slate-700"></span>
+          </span>
+        )}
+      </Component>
+    );
+  };
 
   return (
     <div 
@@ -123,15 +134,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             资源库
          </div>
          
+         {/* Added href example */}
          <MenuItem 
-           label="风格模板 (开发中)"
+           label="风格模板"
+           href="#" 
            icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>}
-           onClick={() => {}} 
+           onClick={(e) => e && e.preventDefault()} // Prevent jump for placeholder
          />
+         
+         {/* Added href example */}
          <MenuItem 
-           label="历史记录 (开发中)"
+           label="历史记录"
+           href="#"
            icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>}
-           onClick={() => {}} 
+           onClick={(e) => e && e.preventDefault()} // Prevent jump for placeholder
          />
       </div>
 
